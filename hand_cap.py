@@ -9,18 +9,27 @@ from typing import List, Dict
 st.title('Ring Virtual Try-On')
 
 # Apply custom CSS to increase camera preview size
-st.markdown("""
+# Custom CSS to make the camera full-screen
+st.markdown(
+    """
     <style>
-    .stCamera > div {
-        width: 100% !important;
+    .css-1v0mbdj, .css-2trqyj {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 9999;
     }
-    .stCamera video {
-        height: 500px !important;
-        width: 100% !important;
-        object-fit: cover; 
+    video {
+        width: 100vw;
+        height: 100vh;
+        object-fit: cover;
     }
     </style>
-    """, unsafe_allow_html = True)
+    """,
+    unsafe_allow_html=True
+)
 
 # Initialize session state if not already done
 if "ring_selected" not in st.session_state:
