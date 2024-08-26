@@ -1,0 +1,1 @@
+web: streamlit run hand_cap.py
