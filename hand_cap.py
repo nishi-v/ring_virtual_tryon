@@ -9,22 +9,21 @@ from typing import List, Dict
 st.title('Ring Virtual Try-On')
 
 # Apply custom CSS to increase camera preview size
-# Custom CSS to make the camera full-screen
 st.markdown(
     """
     <style>
-    .css-1v0mbdj, .css-2trqyj {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 9999;
-    }
-    video {
+    .camera-container {
+        position: relative;
         width: 100vw;
         height: 100vh;
-        object-fit: cover;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .camera-container video {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
     }
     </style>
     """,
@@ -68,9 +67,13 @@ else:
     # Display selected Ring
     st.image(object, caption="Selected Ring", width=200)
 
-    # Streamlit widget to capture an image using the webcam
-    camera_image = st.camera_input("Capture an image of the Hand")
-        
+    # Create an empty container where the camera input will be placed
+    camera_container = st.empty()
+
+    # Add the camera input widget into the custom container
+    with camera_container:
+        camera_image = st.camera_input("Capture an image of the Hand")
+
     if camera_image is not None:
         # Save the captured file temporarily
         try:
