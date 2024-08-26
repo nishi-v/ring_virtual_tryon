@@ -1,54 +1,56 @@
-import numpy as np
-import cv2
 import streamlit as st
 import requests
 from PIL import Image
 import json
+import cv2
+import numpy as np
 from typing import List, Dict
 
-st.title('Ring Virtual Try On')
+st.title('Ring Virtual Try-On')
+
+# Apply custom CSS to increase camera preview size
+st.markdown("""
+    <style>
+    .stCamera > div {
+        width: 100% !important;
+    }
+    .stCamera video {
+        height: 500px !important;
+        width: 100% !important;
+        object-fit: cover; 
+    }
+    </style>
+    """, unsafe_allow_html = True)
 
 # Initialize session state if not already done
-# if "gender_selected" not in st.session_state:
 if "ring_selected" not in st.session_state:
-    # st.session_state.gender_selected = False
     st.session_state.ring_selected = False
     st.session_state.finger_selected = False
     st.session_state.fingers_detected = []
-    st.session_state.finger_to_coords = {}  # Store finger data for each selection
+    st.session_state.finger_to_coords = {}
 
-# # Gender Selection
-# if not st.session_state.gender_selected:
-#     gender = st.selectbox("Select Gender", ["Men", "Women"])
-#     if st.button("Next"):
-#         st.session_state.gender = gender
-#         st.session_state.gender_selected = True
-
-# Define ring options based on gender
-# if st.session_state.gender_selected:
 if not st.session_state.ring_selected:
     rings = {
         "Ring 1": "rings/men/men-ring-02.png",
         "Ring 2": "rings/men/men-ring-03.png",
         "Ring 3": "rings/women/RFSV015D1F.png",
         "Ring 4": "rings/women/RFSV016D1F.png"
-        }
-        
-    # Display ring images with "Try On" buttons
+    }
+
     for name, image_path in rings.items():
         try:
             obj = Image.open(image_path).convert("RGBA")
         except Exception as e:
             st.error(f"Error loading image {image_path}: {e}")
             continue
-            
+
         st.image(obj, caption=name, width=200)
-            
+
         if st.button(f"Try On {name}"):
             st.session_state.ring_selected = True
             st.session_state.selected_ring = name
             st.session_state.object = obj
-            break  # Exit the loop after a ring is selected
+            break
 
 else:
     # Capture Hand Image and Overlay Selected Ring
@@ -131,9 +133,9 @@ else:
             overlay = Image.new("RGBA", (img_width, img_height), (0, 0, 0, 0))
 
             # Draw circles at the new coordinates
-            cv2.circle(img, left_pixel, 5, (0, 0, 255), -1)
-            cv2.circle(img, center_pixel, 5, (0, 0, 255), -1)
-            cv2.circle(img, right_pixel, 5, (0, 0, 255), -1)
+            cv2.circle(img, left_pixel, 2, (0, 0, 255), -1)
+            cv2.circle(img, center_pixel, 2, (0, 0, 255), -1)
+            cv2.circle(img, right_pixel, 2, (0, 0, 255), -1)
 
             st.image(img, caption='Wrist with Coordinates', use_column_width=True)
 
@@ -213,9 +215,9 @@ else:
                     img_with_ring = Image.fromarray(updated_img, "RGB").convert("RGBA")
 
                     # Draw circles at the new coordinates
-                    cv2.circle(updated_img, left_pixel, 5, (0, 0, 255), -1)
-                    cv2.circle(updated_img, center_pixel, 5, (0, 0, 255), -1)
-                    cv2.circle(updated_img, right_pixel, 5, (0, 0, 255), -1)
+                    cv2.circle(updated_img, left_pixel, 2, (0, 0, 255), -1)
+                    cv2.circle(updated_img, center_pixel, 2, (0, 0, 255), -1)
+                    cv2.circle(updated_img, right_pixel, 2, (0, 0, 255), -1)
 
                     st.image(updated_img, caption='Wrist with Updated Coordinates', use_column_width=True)
 
