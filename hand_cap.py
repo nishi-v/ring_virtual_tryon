@@ -5,6 +5,14 @@ import requests
 from PIL import Image
 import json
 from typing import List, Dict
+from dotenv import load_dotenv
+import os
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Get API URL from environment variables
+API_URL = os.getenv("API_URL")
 
 st.title('Ring Virtual Try On')
 
@@ -68,7 +76,6 @@ else:
         except Exception as e:
             st.error(f"Error saving captured image: {e}")
                 
-        url = "https://backendfuturesoftai.clouddeploy.in//width"
         payload = {}
         files = [
             ('image', ('temp_image_cam.jpg', open('temp_image_cam.jpg', 'rb'), 'image/jpeg'))
@@ -76,7 +83,7 @@ else:
         headers = {}
 
         try:
-            response = requests.post(url, headers=headers, data=payload, files=files, verify=False)
+            response = requests.post(API_URL, headers = headers, data = payload, files = files, verify = False)
             results = response.text
             data = json.loads(results)
             st.session_state.fingers_detected = [finger for finger in ["Index", "Middle", "Ring", "Pinky"] if finger in data["results"]]
