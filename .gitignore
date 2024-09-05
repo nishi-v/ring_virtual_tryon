@@ -2,9 +2,8 @@
 /r_sample_hands
 /.vscode
 
-ring_vto.py
+py_scripts/
 temp_image.jpg
 wrist_image.jpg
 temp_image_cam.jpg
-backup.py
 .env
