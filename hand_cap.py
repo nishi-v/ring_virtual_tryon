@@ -7,12 +7,18 @@ import json
 from typing import List, Dict
 from dotenv import load_dotenv
 import os
+import time
+from pathlib import Path
+
+# Get the current working directory
+dir = Path(os.getcwd())
 
 # Load environment variables from .env file
-load_dotenv()
+ENV_PATH = dir / '.env'
+load_dotenv(ENV_PATH)
 
 # Get API URL from environment variables
-API_URL = os.getenv("API_URL")
+API_URL = os.environ["API_URL"]
 
 st.title('Ring Virtual Try On')
 
@@ -65,20 +71,32 @@ else:
     # Display selected Ring
     st.image(object, caption="Selected Ring", width=200)
 
-    # Streamlit widget to capture an image using the webcam
-    camera_image = st.camera_input("Capture an image of the Hand")
-        
-    if camera_image is not None:
-        # Save the captured file temporarily
-        try:
-            with open("temp_image_cam.jpg", 'wb') as f:
+    # Provide options to either upload or capture an image
+    option = st.radio("Choose Image Source", ("Capture Image", "Upload Image"))
+
+    if option == "Capture Image":
+        # Streamlit widget to capture an image using the webcam
+        camera_image = st.camera_input("Capture an image of the wrist")
+        if camera_image is not None:
+            with open(dir / "temp_image_cam.jpg", "wb") as f:
                 f.write(camera_image.getbuffer())
-        except Exception as e:
-            st.error(f"Error saving captured image: {e}")
+            img_path = str(dir / 'temp_image_cam.jpg')
+
+    elif option == "Upload Image":
+        # Streamlit widget to upload an image
+        uploaded_image = st.file_uploader("Upload an image of the wrist", type=["jpg", "jpeg", "png"])
+        if uploaded_image is not None:
+            with open(dir / "temp_image.jpg", "wb") as f:
+                f.write(uploaded_image.getbuffer())
+            img_path = str(dir / 'temp_image.jpg')
+
+    # Proceed if either a camera or uploaded image is available
+    if (option == "Capture Image" and camera_image) or (option == "Upload Image" and uploaded_image):
+        start = time.time()
                 
         payload = {}
         files = [
-            ('image', ('temp_image_cam.jpg', open('temp_image_cam.jpg', 'rb'), 'image/jpeg'))
+            ('image', (img_path, open(img_path, 'rb'), 'image/jpeg'))
         ]
         headers = {}
 
@@ -93,7 +111,7 @@ else:
             
         # Load and display the uploaded image
         try:
-            img = cv2.imread('temp_image_cam.jpg')
+            img = cv2.imread(img_path)
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             st.image(img, width=200)
 
