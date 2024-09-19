@@ -19,6 +19,7 @@ load_dotenv(ENV_PATH)
 
 # Get API URL from environment variables
 API_URL = os.environ["API_URL"]
+BEARER_TOKEN = os.environ["BEARER_TOKEN"]
 
 st.title('Ring Virtual Try On')
 
@@ -98,7 +99,9 @@ else:
         files = [
             ('image', (img_path, open(img_path, 'rb'), 'image/jpeg'))
         ]
-        headers = {}
+        headers = {
+            'Authorization': f"Bearer {BEARER_TOKEN}"
+        }
 
         try:
             response = requests.post(API_URL, headers = headers, data = payload, files = files, verify = False)
