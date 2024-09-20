@@ -102,16 +102,36 @@ else:
         headers = {
             'Authorization': f"Bearer {BEARER_TOKEN}"
         }
+        response = requests.post(API_URL, headers = headers, data = payload, files = files, verify = False)
+        end = time.time() - start
+        st.write(f"Time taken for API call: {end} seconds")
+
+        # Parsing API Response
+        results = response.text
 
         try:
-            response = requests.post(API_URL, headers = headers, data = payload, files = files, verify = False)
-            results = response.text
             data = json.loads(results)
             st.session_state.fingers_detected = [finger for finger in ["Index", "Middle", "Ring", "Pinky"] if finger in data["results"]]
             st.session_state.finger_to_coords = data["results"]  # Store all finger data
-        except (requests.RequestException, json.JSONDecodeError) as e:
+
+            num_fingers = len(st.session_state.fingers_detected)
+            st.write(f"Detected {num_fingers} finger(s): {', '.join(st.session_state.fingers_detected)}")
+        except requests.RequestException as e:
             st.error(f"Error with API request or processing response: {e}")
-            
+            st.write("Here's the response text:")
+            st.write(results)
+        except json.JSONDecodeError:
+            st.write("Error decoding JSON. Here's the response text:")
+            st.write(results)  # Display raw response text
+            st.error("Failed to decode JSON from the API response.")
+            st.stop()
+        except KeyError:
+            st.write("Error: Expected data format is not present in the response.")
+            st.write("Here's the response text:")
+            st.write(results)  # Display raw response text
+            st.error("Failed to find expected 'wrist' data in the API response.")
+            st.stop()
+
         # Load and display the uploaded image
         try:
             img = cv2.imread(img_path)
@@ -148,6 +168,7 @@ else:
             right_coords: List[float] = finger_data["right"]
             center_coords: List[float] = finger_data["center"]
             rotation_angle: float = finger_data["rotation_angle"]
+            polygon_coords = finger_data["polygon"]
 
             center_coords_rev: List[float] = [(left_coords[0] + right_coords[0]) / 2, (left_coords[1] + right_coords[1]) / 2]
             img_height, img_width = img.shape[:2]
@@ -163,7 +184,10 @@ else:
             cv2.circle(img, center_pixel, 2, (0, 0, 255), -1)
             cv2.circle(img, right_pixel, 2, (0, 0, 255), -1)
 
-            st.image(img, caption='Wrist with Coordinates', use_column_width=True)
+            polygon_pixels = [(int(coord[0] * img_width / 100), int(coord[1] * img_height / 100)) for coord in polygon_coords]
+            cv2.polylines(img, [np.array(polygon_pixels)], isClosed=True, color=(0, 255, 0), thickness=1)
+
+            st.image(img, caption='Wrist with Coordinates and polygon', use_column_width=True)
 
             # Calculate finger length in pixels
             f_length = np.sqrt((right_pixel[0] - left_pixel[0]) ** 2 + (right_pixel[1] - left_pixel[1]) ** 2)
@@ -211,7 +235,7 @@ else:
             # Combine the original image with the overlay
             img_with_ring = Image.alpha_composite(Image.fromarray(img, "RGB").convert("RGBA"), overlay)
 
-            st.image(img_with_ring, caption='Ring Overlay', use_column_width=True)
+            st.image(img_with_ring, caption='Ring Overlay with coordinates and polygon', use_column_width=True)
 
             # Combine the original image with the overlay
             my_img_with_ring = Image.alpha_composite(Image.fromarray(my_img, "RGB").convert("RGBA"), overlay)
@@ -230,6 +254,7 @@ else:
                     right_coords = finger_data["right"]
                     center_coords = finger_data["center"]
                     rotation_angle = finger_data["rotation_angle"]
+                    polygon_coords = finger_data["polygon"]
 
                     center_coords_rev = [(left_coords[0] + right_coords[0]) / 2, (left_coords[1] + right_coords[1]) / 2]
                     img_height, img_width = updated_img.shape[:2]
@@ -244,8 +269,11 @@ else:
                     cv2.circle(updated_img, left_pixel, 2, (0, 0, 255), -1)
                     cv2.circle(updated_img, center_pixel, 2, (0, 0, 255), -1)
                     cv2.circle(updated_img, right_pixel, 2, (0, 0, 255), -1)
+                    
+                    polygon_pixels = [(int(coord[0] * img_width / 100), int(coord[1] * img_height / 100)) for coord in polygon_coords]
+                    cv2.polylines(updated_img, [np.array(polygon_pixels)], isClosed=True, color=(0, 255, 0), thickness=1)
 
-                    st.image(updated_img, caption='Wrist with Updated Coordinates', use_column_width=True)
+                    st.image(updated_img, caption='Updated finger with Coordinates and polygon', use_column_width=True)
 
                     # Recalculate finger length in pixels
                     f_length = np.sqrt((right_pixel[0] - left_pixel[0]) ** 2 + (right_pixel[1] - left_pixel[1]) ** 2)
@@ -294,10 +322,10 @@ else:
                     # Combine the original image with the new overlay
                     img_with_ring = Image.alpha_composite(Image.fromarray(updated_img, "RGB").convert("RGBA"), overlay)
 
-                    st.image(img_with_ring, caption='Updated Ring Overlay', use_column_width=True)
+                    st.image(img_with_ring, caption='Updated Ring Overlay with coordinates and polygon', use_column_width=True)
 
 
                     # Combine the original image with the new overlay
                     my_img_with_ring = Image.alpha_composite(Image.fromarray(my_img1, "RGB").convert("RGBA"), overlay)
 
-                    st.image(my_img_with_ring, caption='Updated Ring Overlay without coordinates', use_column_width=True)
+                    st.image(my_img_with_ring, caption='Updated Ring Overlay', use_column_width=True)
